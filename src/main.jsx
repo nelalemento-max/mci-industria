@@ -48,7 +48,7 @@ function App() {
 
   return <>
     <header className="topbar">
-      <a className="brand" href="#inicio" aria-label="MCI inicio"><span className="brand-mark">MCI</span><span><strong>Mantenimiento Corporativo Industrial</strong><small>Soluciones para estaciones de servicio</small></span></a>
+      <a className="brand" href="#inicio" aria-label="MCI inicio"><img className="brand-logo" src="/logo-mci.jpeg" alt="MCI Mantenimiento Corporativo Industrial"/><span><strong>Mantenimiento Corporativo Industrial</strong><small>Venta de surtidores y equipos</small></span></a>
       <nav className={menu ? 'nav open' : 'nav'}>
         <a href="#productos" onClick={() => setMenu(false)}>Productos</a>
         <a href="#servicios" onClick={() => setMenu(false)}>Servicios</a>
@@ -99,7 +99,7 @@ function App() {
       <section className="systems" id="sistemas"><div><span className="eyebrow light">TECNOLOGÍA MCI</span><h2>Sistemas de control para una operación más ordenada</h2><p>Desarrollamos soluciones para inventarios, mantenimiento, ventas, reportes y seguimiento operativo, adaptadas a cada empresa.</p><a className="button white" href={`https://wa.me/${WHATSAPP}?text=${encodeURIComponent('Hola MCI, deseo una demostración de sus sistemas de control.')}`} target="_blank" rel="noreferrer">Solicitar demostración</a></div><div className="system-screen"><div className="screen-top"><i></i><i></i><i></i></div><div className="screen-content"><div className="mini-sidebar"></div><div className="mini-main"><span></span><div className="mini-stats"><b></b><b></b><b></b></div><div className="mini-chart"></div></div></div></div></section>
     </main>
 
-    <footer id="contacto"><div className="brand footer-brand"><span className="brand-mark">MCI</span><span><strong>Mantenimiento Corporativo Industrial</strong><small>Santa Cruz, Bolivia</small></span></div><div><strong>Contacto comercial</strong><a href="tel:+59167778452"><Phone size={16}/> 67778452</a><a href="https://wa.me/59173171675" target="_blank" rel="noreferrer"><MessageCircle size={16}/> 73171675</a></div><div><strong>Ubicación</strong><span>Av. Centenario, calle 3 N.º 3020</span><span>Santa Cruz de la Sierra</span></div></footer>
+    <footer id="contacto"><div className="brand footer-brand"><img className="brand-logo footer-logo" src="/logo-mci.jpeg" alt="MCI Mantenimiento Corporativo Industrial"/><span><strong>Mantenimiento Corporativo Industrial</strong><small>Santa Cruz, Bolivia</small></span></div><div><strong>Contacto comercial</strong><a href="tel:+59167778452"><Phone size={16}/> 67778452</a><a href="https://wa.me/59173171675" target="_blank" rel="noreferrer"><MessageCircle size={16}/> 73171675</a></div><div><strong>Ubicación</strong><span>Av. Centenario, calle 3 N.º 3020</span><span>Santa Cruz de la Sierra</span></div></footer>
 
     <a className="floating-wa" href={`https://wa.me/${WHATSAPP}`} target="_blank" rel="noreferrer" aria-label="WhatsApp MCI"><MessageCircle/></a>
     {quoteOpen && <QuoteDrawer items={quote} setItems={setQuote} onClose={() => setQuoteOpen(false)} onRequest={() => {setQuoteOpen(false); setRequestOpen(true)}}/>}
