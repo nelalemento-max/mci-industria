@@ -1,7 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
-import { Search, Wrench, Building2, Cpu, ShoppingBag, Menu, X, ChevronRight, MessageCircle, ShieldCheck, MapPin, Phone, Plus, Minus, Trash2, Send, Gauge, Fuel, CirclePlay, Video, ExternalLink } from 'lucide-react'
+import { Search, Wrench, Building2, Cpu, ShoppingBag, Menu, X, ChevronRight, MessageCircle, ShieldCheck, MapPin, Phone, Plus, Minus, Trash2, Send, Gauge, Fuel, CirclePlay, Video, ExternalLink, Download, LockKeyhole, Smartphone, UserRound } from 'lucide-react'
 import './styles.css'
+import { saveRequest, trackVisit, watchSession } from './firebase'
+
+const Portal = lazy(() => import('./Portal'))
 
 const WHATSAPP = '59167778452'
 
@@ -88,6 +91,29 @@ function App() {
   const [menu, setMenu] = useState(false)
   const [quoteOpen, setQuoteOpen] = useState(false)
   const [requestOpen, setRequestOpen] = useState(false)
+  const [user, setUser] = useState(null)
+  const [portalOpen, setPortalOpen] = useState(window.location.hash.startsWith('#/portal'))
+  const [visits, setVisits] = useState(0)
+  const [installPrompt, setInstallPrompt] = useState(null)
+
+  useEffect(() => watchSession(setUser), [])
+  useEffect(() => {
+    const route = () => setPortalOpen(window.location.hash.startsWith('#/portal'))
+    window.addEventListener('hashchange', route)
+    return () => window.removeEventListener('hashchange', route)
+  }, [])
+  useEffect(() => {
+    const visitor = (event) => setVisits(event.detail)
+    window.addEventListener('mci-visits', visitor)
+    let stop
+    trackVisit().then((unsubscribe) => {stop = unsubscribe}).catch(() => {})
+    return () => {window.removeEventListener('mci-visits', visitor); stop?.()}
+  }, [])
+  useEffect(() => {
+    const ready = (event) => {event.preventDefault(); setInstallPrompt(event)}
+    window.addEventListener('beforeinstallprompt', ready)
+    return () => window.removeEventListener('beforeinstallprompt', ready)
+  }, [])
 
   const categories = ['Todos', ...new Set(products.map((p) => p.category))]
   const filtered = useMemo(() => products.filter((p) => {
@@ -101,6 +127,16 @@ function App() {
     setQuoteOpen(true)
   }
 
+  const openPortal = () => {window.location.hash = '#/portal'; setPortalOpen(true)}
+  const closePortal = () => {window.location.hash = '#inicio'; setPortalOpen(false)}
+  const installApp = async () => {
+    if (installPrompt) { await installPrompt.prompt(); setInstallPrompt(null); return }
+    const isiPhone = /iphone|ipad|ipod/i.test(navigator.userAgent)
+    window.alert(isiPhone ? 'En Safari, pulse Compartir y luego “Agregar a pantalla de inicio”.' : 'Abra el menú del navegador y seleccione “Instalar aplicación” o “Agregar a pantalla de inicio”.')
+  }
+
+  if (portalOpen) return <Suspense fallback={<div className="portal-loading">Cargando servicios MCI...</div>}><Portal user={user} onBack={closePortal}/></Suspense>
+
   return <>
     <header className="topbar">
       <a className="brand" href="#inicio" aria-label="MCI inicio"><img className="brand-logo" src="/logo-mci.jpeg" alt="MCI Mantenimiento Corporativo Industrial"/><span><strong>Mantenimiento Corporativo Industrial</strong><small>Venta de surtidores y equipos</small></span></a>
@@ -112,6 +148,7 @@ function App() {
         <a href="#contacto" onClick={() => setMenu(false)}>Contacto</a>
       </nav>
       <button className="quote-pill" onClick={() => setQuoteOpen(true)}><ShoppingBag size={18}/> Mi cotización <b>{quote.reduce((a, i) => a + i.qty, 0)}</b></button>
+      <button className="access-pill" onClick={openPortal}><LockKeyhole size={17}/>{user ? 'Mi cuenta' : 'Iniciar sesión'}</button>
       <button className="menu-button" onClick={() => setMenu(!menu)} aria-label="Abrir menú">{menu ? <X/> : <Menu/>}</button>
     </header>
 
@@ -167,6 +204,8 @@ function App() {
         <div className="media-block"><div className="section-head media-head"><div><span className="eyebrow">CONTENIDO MCI</span><h2>Videos, demostraciones y trabajos</h2><p>Publicaremos demostraciones de repuestos, mantenimientos y proyectos realizados por MCI. Los videos de nuestros canales de TikTok y YouTube se mostrarán aquí.</p></div></div><div className="video-channels"><article><div className="video-icon tiktok"><Video/></div><div><small>TIKTOK MCI</small><h3>Videos cortos y transmisiones</h3><p>Reels de productos, consejos técnicos y trabajos en estaciones de servicio.</p><span className="coming">Próximamente: canal oficial</span></div></article><article><div className="video-icon youtube"><CirclePlay/></div><div><small>YOUTUBE MCI</small><h3>Demostraciones completas</h3><p>Funcionamiento de equipos, mantenimiento y presentación de nuestros sistemas.</p><span className="coming">Próximamente: canal oficial</span></div></article></div></div>
         <div className="location-block"><span className="eyebrow">VISÍTENOS</span><h2>MCI en Santa Cruz</h2><p><MapPin size={17}/> Av. Centenario, calle 3 N.º 3020, Santa Cruz de la Sierra</p><div className="map-frame"><iframe title="Ubicación de MCI en Google Maps" src="https://www.google.com/maps?q=Av.%20Centenario%20calle%203%20N%C2%BA%203020%20Santa%20Cruz%20de%20la%20Sierra%20Bolivia&output=embed" loading="lazy" referrerPolicy="no-referrer-when-downgrade"></iframe></div><a className="button outline map-button" href="https://www.google.com/maps/search/?api=1&query=Av.%20Centenario%20calle%203%20N%C2%BA%203020%20Santa%20Cruz%20de%20la%20Sierra%20Bolivia" target="_blank" rel="noreferrer">Abrir en Google Maps <ExternalLink size={17}/></a></div>
       </section>
+
+      <section className="digital-services" id="aplicaciones"><div className="digital-copy"><span className="eyebrow light">APLICACIONES Y SERVICIOS</span><h2>MCI también lo acompaña digitalmente</h2><p>Instale nuestra aplicación web, solicite cotizaciones y acceda a información especializada desde su celular o computadora.</p><div className="install-actions"><a className="button white" href="https://github.com/nelalemento-max/mci-industria/releases/download/android-latest/MCI-Industria.apk"><Download size={18}/> Descargar APK Android</a><button className="button systems-demo" onClick={installApp}><Smartphone size={18}/> Instalar app web</button></div><small>En iPhone abra esta página con Safari, pulse Compartir y seleccione “Agregar a pantalla de inicio”. El APK Android se actualiza desde el repositorio oficial de MCI.</small></div><div className="digital-access"><div className="visitor-counter"><strong>{visits.toLocaleString('es-BO')}</strong><span>visitas acumuladas</span></div><div className="extras-list"><span><ShieldCheck/> Saldos de combustible</span><span><ShieldCheck/> Dólar BCB y referencias P2P</span><span><ShieldCheck/> Precios regionales de combustibles</span><span><ShieldCheck/> Cotizaciones MCI en PDF</span></div><button className="button primary full" onClick={openPortal}><UserRound size={18}/>{user ? 'Abrir mi cuenta' : 'Iniciar sesión'}</button></div></section>
     </main>
 
     <footer id="contacto"><div className="brand footer-brand"><img className="brand-logo footer-logo" src="/logo-mci.jpeg" alt="MCI Mantenimiento Corporativo Industrial"/><span><strong>Mantenimiento Corporativo Industrial</strong><small>Santa Cruz, Bolivia</small></span></div><div><strong>Contacto comercial</strong><a href="tel:+59167778452"><Phone size={16}/> 67778452</a><a href="https://wa.me/59173171675" target="_blank" rel="noreferrer"><MessageCircle size={16}/> 73171675</a></div><div><strong>Ubicación</strong><span>Av. Centenario, calle 3 N.º 3020</span><span>Santa Cruz de la Sierra</span></div></footer>
@@ -206,12 +245,14 @@ function RequestModal({items, onClose}) {
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [detail, setDetail] = useState(items.map((i) => `${i.qty} x ${i.name}`).join('\n'))
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault()
+    try { await saveRequest({name, phone, detail, items:items.map((item) => ({id:item.id,name:item.name,qty:item.qty}))}) } catch {}
     const text = `SOLICITUD DE COTIZACIÓN MCI\nNombre: ${name}\nWhatsApp: ${phone}\n\nDetalle:\n${detail}`
     window.open(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer')
   }
   return <div className="overlay modal-overlay"><section className="modal"><button className="close" onClick={onClose}><X/></button><span className="eyebrow">MCI SE LO CONSIGUE</span><h2>Cuéntenos qué repuesto necesita</h2><p>Solo necesitamos sus datos de contacto y el detalle del equipo. Nuestro personal continuará la atención por WhatsApp.</p><form onSubmit={submit}><label>Nombre completo<input required value={name} onChange={(e) => setName(e.target.value)} placeholder="Ej. Carlos Mendoza"/></label><label>Número de WhatsApp<input required inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Ej. 70000000"/></label><label>Detalle del repuesto<textarea required rows="5" value={detail} onChange={(e) => setDetail(e.target.value)} placeholder="Nombre, marca, modelo, medida, cantidad o cualquier dato que tenga..."/></label><button className="button primary full" type="submit"><Send size={18}/> Enviar solicitud por WhatsApp</button></form><small className="privacy">Sus datos serán utilizados únicamente para atender esta solicitud.</small></section></div>
 }
 
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}))
 createRoot(document.getElementById('root')).render(<App />)

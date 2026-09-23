@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">MCI Industria</string>
+    <string name="title_activity_main">MCI Industria</string>
+    <string name="package_name">bo.com.mci.industria</string>
+    <string name="custom_url_scheme">bo.com.mci.industria</string>
+</resources>

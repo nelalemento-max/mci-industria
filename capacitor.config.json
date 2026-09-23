@@ -1,0 +1,8 @@
+{
+  "appId": "bo.com.mci.industria",
+  "appName": "MCI Industria",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  }
+}
