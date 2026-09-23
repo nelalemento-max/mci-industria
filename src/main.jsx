@@ -26,6 +26,44 @@ const services = [
   { icon: Cpu, title: 'Sistemas de control', text: 'Soluciones web, móviles y offline para controlar operaciones, inventarios y mantenimiento.' },
 ]
 
+const controlSystems = [
+  {
+    title: 'Mi Combustible',
+    subtitle: 'Crédito digital y fidelización',
+    text: 'El cliente carga saldo, consume combustible y consulta desde su celular sus movimientos, beneficios y promociones.',
+    image: '/systems/mi-combustible.jpeg',
+    features: ['Saldo e historial en celular', 'Familias, empresas y flotas', 'Promociones y compras anticipadas'],
+  },
+  {
+    title: 'Control inteligente de personal',
+    subtitle: 'Turnos, actividad y productividad',
+    text: 'Registra jornadas, responsables y actividad para conocer el rendimiento real de cada turno y mejorar la atención.',
+    image: '/systems/control-personal.jpeg',
+    features: ['Ingreso y salida biométrica', 'Actividad y tiempos por turno', 'Indicadores de productividad'],
+  },
+  {
+    title: 'Mantenimiento inteligente de activos',
+    subtitle: 'Equipos siempre disponibles',
+    text: 'Crea el expediente digital de dispensers, bombas, tanques y otros activos, con alertas e historial técnico.',
+    image: '/systems/mantenimiento-activos.jpeg',
+    features: ['Preventivo y correctivo', 'Repuestos, fotografías y costos', 'Alertas y próximos mantenimientos'],
+  },
+  {
+    title: 'Control operativo de combustible',
+    subtitle: 'Del ingreso del producto hasta la venta',
+    text: 'Centraliza cisternas, tanques, existencias, dispensers y ventas para detectar diferencias y planificar el abastecimiento.',
+    icon: Fuel,
+    features: ['Recepciones y movimientos', 'Existencias y conciliaciones', 'Históricos y alertas'],
+  },
+  {
+    title: 'Administración y gerencia inteligente',
+    subtitle: 'Indicadores para decidir mejor',
+    text: 'Convierte la operación en un tablero disponible desde celular o computadora, con accesos según cada responsabilidad.',
+    icon: Gauge,
+    features: ['Dashboard y comparativos', 'Reportes para contabilidad', 'Exportación a Excel y PDF'],
+  },
+]
+
 function App() {
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState('Todos')
@@ -96,7 +134,14 @@ function App() {
         </article>)}</div> : <div className="empty"><Search/><h3>No encontramos ese repuesto en el catálogo</h3><p>Envíenos su nombre, WhatsApp y el detalle del equipo. Nosotros lo buscamos.</p><button className="button primary" onClick={() => setRequestOpen(true)}>Solicitar búsqueda</button></div>}
       </section>
 
-      <section className="systems" id="sistemas"><div><span className="eyebrow light">TECNOLOGÍA MCI</span><h2>Sistemas de control para una operación más ordenada</h2><p>Desarrollamos soluciones para inventarios, mantenimiento, ventas, reportes y seguimiento operativo, adaptadas a cada empresa.</p><a className="button white" href={`https://wa.me/${WHATSAPP}?text=${encodeURIComponent('Hola MCI, deseo una demostración de sus sistemas de control.')}`} target="_blank" rel="noreferrer">Solicitar demostración</a></div><div className="system-screen"><div className="screen-top"><i></i><i></i><i></i></div><div className="screen-content"><div className="mini-sidebar"></div><div className="mini-main"><span></span><div className="mini-stats"><b></b><b></b><b></b></div><div className="mini-chart"></div></div></div></div></section>
+      <section className="systems" id="sistemas">
+        <div className="systems-intro"><div><span className="eyebrow light">TECNOLOGÍA MCI</span><h2>Sistemas de control para una operación más ordenada</h2><p>Cinco soluciones que pueden implementarse por etapas para controlar combustible, personal, activos, administración y fidelización de clientes.</p></div><div className="systems-intro-actions"><a className="button white" href="/catalogos/soluciones-mci.pdf" target="_blank" rel="noreferrer">Ver catálogo completo</a><a className="button systems-demo" href={`https://wa.me/${WHATSAPP}?text=${encodeURIComponent('Hola MCI, deseo una demostración de sus sistemas de control.')}`} target="_blank" rel="noreferrer"><MessageCircle size={18}/> Solicitar demostración</a></div></div>
+        <div className="systems-grid">{controlSystems.map(({title, subtitle, text, image, icon: Icon, features}) => <article className={`system-card ${image ? 'with-image' : 'compact'}`} key={title}>
+          {image ? <a className="system-poster" href={image} target="_blank" rel="noreferrer" aria-label={`Ampliar información de ${title}`}><img src={image} alt={`Presentación del sistema ${title}`}/><span>Ver imagen completa</span></a> : <div className="system-card-icon"><Icon/></div>}
+          <div className="system-card-body"><small>{subtitle}</small><h3>{title}</h3><p>{text}</p><ul>{features.map((feature) => <li key={feature}><ShieldCheck size={15}/>{feature}</li>)}</ul><a href={`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(`Hola MCI, deseo información y una demostración del sistema: ${title}.`)}`} target="_blank" rel="noreferrer">Consultar este sistema <ChevronRight size={16}/></a></div>
+        </article>)}</div>
+        <div className="systems-catalog-cta"><div><strong>5 soluciones. Una estación más rentable.</strong><span>Digitalice por etapas, controle mejor, reduzca costos y fidelice clientes.</span></div><a className="button white" href="/catalogos/soluciones-mci.pdf" download>Descargar catálogo PDF</a></div>
+      </section>
     </main>
 
     <footer id="contacto"><div className="brand footer-brand"><img className="brand-logo footer-logo" src="/logo-mci.jpeg" alt="MCI Mantenimiento Corporativo Industrial"/><span><strong>Mantenimiento Corporativo Industrial</strong><small>Santa Cruz, Bolivia</small></span></div><div><strong>Contacto comercial</strong><a href="tel:+59167778452"><Phone size={16}/> 67778452</a><a href="https://wa.me/59173171675" target="_blank" rel="noreferrer"><MessageCircle size={16}/> 73171675</a></div><div><strong>Ubicación</strong><span>Av. Centenario, calle 3 N.º 3020</span><span>Santa Cruz de la Sierra</span></div></footer>
