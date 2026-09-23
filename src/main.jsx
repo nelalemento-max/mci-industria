@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react'
 import { createRoot } from 'react-dom/client'
-import { Search, Wrench, Building2, Cpu, ShoppingBag, Menu, X, ChevronRight, MessageCircle, ShieldCheck, MapPin, Phone, Plus, Minus, Trash2, Send, Gauge, Fuel } from 'lucide-react'
+import { Search, Wrench, Building2, Cpu, ShoppingBag, Menu, X, ChevronRight, MessageCircle, ShieldCheck, MapPin, Phone, Plus, Minus, Trash2, Send, Gauge, Fuel, CirclePlay, Video, ExternalLink } from 'lucide-react'
 import './styles.css'
 
 const WHATSAPP = '59167778452'
@@ -18,6 +18,10 @@ const products = [
   { id: 10, name: 'Manguera metálica flexible 1½ pulgadas', category: 'Mangueras', image: '/products/image10.png', tags: 'manguera metálica flexible 1 1/2' },
   { id: 11, name: 'Unidad de sellado 1 pulgada', category: 'Sellado', image: '/products/image11.png', tags: 'unidad sellado 1' },
   { id: 12, name: 'Unidad de sellado ¾ pulgada', category: 'Sellado', image: '/products/image12.png', tags: 'unidad sellado 3/4' },
+  { id: 13, name: 'Codo giratorio de ¾ y 1 pulgada', category: 'Despacho', image: '/products/codo-giratorio.jpg', tags: 'codo giratorio swivel 3/4 1 pulgada despacho combustible' },
+  { id: 14, name: 'Pistola automática para combustible de ¾ y 1 pulgada', category: 'Despacho', image: '/products/pistola-automatica.jpg', tags: 'pistola automática boquilla nozzle 3/4 1 pulgada despacho combustible' },
+  { id: 15, name: 'Manguera para combustible de ¾ y 1 pulgada x 5 metros', category: 'Mangueras', image: '/products/manguera-combustible-5m.jpg', tags: 'manguera combustible 3/4 1 pulgada 5 metros punta giratoria colores gasolina diesel' },
+  { id: 16, name: 'Visor de paso de combustible de ¾ y 1 pulgada', category: 'Monitoreo', image: '/products/visor-paso-combustible.jpg', tags: 'visor mirilla sight glass paso combustible 3/4 1 pulgada monitoreo' },
 ]
 
 const services = [
@@ -91,6 +95,7 @@ function App() {
         <a href="#productos" onClick={() => setMenu(false)}>Productos</a>
         <a href="#servicios" onClick={() => setMenu(false)}>Servicios</a>
         <a href="#sistemas" onClick={() => setMenu(false)}>Sistemas</a>
+        <a href="#videos" onClick={() => setMenu(false)}>Videos</a>
         <a href="#contacto" onClick={() => setMenu(false)}>Contacto</a>
       </nav>
       <button className="quote-pill" onClick={() => setQuoteOpen(true)}><ShoppingBag size={18}/> Mi cotización <b>{quote.reduce((a, i) => a + i.qty, 0)}</b></button>
@@ -141,6 +146,11 @@ function App() {
           <div className="system-card-body"><small>{subtitle}</small><h3>{title}</h3><p>{text}</p><ul>{features.map((feature) => <li key={feature}><ShieldCheck size={15}/>{feature}</li>)}</ul><a href={`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(`Hola MCI, deseo información y una demostración del sistema: ${title}.`)}`} target="_blank" rel="noreferrer">Consultar este sistema <ChevronRight size={16}/></a></div>
         </article>)}</div>
         <div className="systems-catalog-cta"><div><strong>5 soluciones. Una estación más rentable.</strong><span>Digitalice por etapas, controle mejor, reduzca costos y fidelice clientes.</span></div><a className="button white" href="/catalogos/soluciones-mci.pdf" download>Descargar catálogo PDF</a></div>
+      </section>
+
+      <section className="media-location" id="videos">
+        <div className="media-block"><div className="section-head media-head"><div><span className="eyebrow">CONTENIDO MCI</span><h2>Videos, demostraciones y trabajos</h2><p>Publicaremos demostraciones de repuestos, mantenimientos y proyectos realizados por MCI. Los videos de nuestros canales de TikTok y YouTube se mostrarán aquí.</p></div></div><div className="video-channels"><article><div className="video-icon tiktok"><Video/></div><div><small>TIKTOK MCI</small><h3>Videos cortos y transmisiones</h3><p>Reels de productos, consejos técnicos y trabajos en estaciones de servicio.</p><span className="coming">Próximamente: canal oficial</span></div></article><article><div className="video-icon youtube"><CirclePlay/></div><div><small>YOUTUBE MCI</small><h3>Demostraciones completas</h3><p>Funcionamiento de equipos, mantenimiento y presentación de nuestros sistemas.</p><span className="coming">Próximamente: canal oficial</span></div></article></div></div>
+        <div className="location-block"><span className="eyebrow">VISÍTENOS</span><h2>MCI en Santa Cruz</h2><p><MapPin size={17}/> Av. Centenario, calle 3 N.º 3020, Santa Cruz de la Sierra</p><div className="map-frame"><iframe title="Ubicación de MCI en Google Maps" src="https://www.google.com/maps?q=Av.%20Centenario%20calle%203%20N%C2%BA%203020%20Santa%20Cruz%20de%20la%20Sierra%20Bolivia&output=embed" loading="lazy" referrerPolicy="no-referrer-when-downgrade"></iframe></div><a className="button outline map-button" href="https://www.google.com/maps/search/?api=1&query=Av.%20Centenario%20calle%203%20N%C2%BA%203020%20Santa%20Cruz%20de%20la%20Sierra%20Bolivia" target="_blank" rel="noreferrer">Abrir en Google Maps <ExternalLink size={17}/></a></div>
       </section>
     </main>
 
