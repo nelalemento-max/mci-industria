@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { Search, Wrench, Building2, Cpu, ShoppingBag, Menu, X, ChevronRight, MessageCircle, ShieldCheck, MapPin, Phone, Plus, Minus, Trash2, Send, Gauge, Fuel, CirclePlay, Video, ExternalLink } from 'lucide-react'
 import './styles.css'
@@ -28,6 +28,19 @@ const services = [
   { icon: Wrench, title: 'Mantenimiento especializado', text: 'Diagnóstico, reparación y mantenimiento preventivo y correctivo de equipos petroleros.' },
   { icon: Building2, title: 'Construcción y adecuación', text: 'Proyectos integrales, ampliaciones y adecuaciones para estaciones de servicio.' },
   { icon: Cpu, title: 'Sistemas de control', text: 'Soluciones web, móviles y offline para controlar operaciones, inventarios y mantenimiento.' },
+]
+
+const serviceProjects = [
+  { image: '/services/trabajo-01.jpg', title: 'Construcción de estaciones de servicio', text: 'Estructuras, cubiertas, islas y obras complementarias.' },
+  { image: '/services/trabajo-02.jpg', title: 'Obras civiles e instalaciones', text: 'Ejecución y adecuación de áreas operativas para estaciones.' },
+  { image: '/services/trabajo-03.jpg', title: 'Instalación y adecuación de tanques', text: 'Áreas de almacenamiento, protección y seguridad operacional.' },
+  { image: '/services/trabajo-04.jpg', title: 'Montaje de estructuras metálicas', text: 'Cubiertas y estructuras para nuevas estaciones de servicio.' },
+  { image: '/services/trabajo-05.jpg', title: 'Instalación de equipos de despacho', text: 'Montaje y puesta a punto de dispensers e islas de carga.' },
+  { image: '/services/trabajo-06.jpg', title: 'Mantenimiento de bombas y tuberías', text: 'Intervención técnica de equipos, conexiones y sistemas de impulsión.' },
+  { image: '/services/trabajo-07.jpg', title: 'Tanques de almacenamiento de combustible', text: 'Instalación, adecuación y protección de sistemas de almacenamiento.' },
+  { image: '/services/trabajo-08.jpg', title: 'Tableros eléctricos y automatización', text: 'Armado, instalación y mantenimiento de tableros de control.' },
+  { image: '/services/trabajo-09.jpg', title: 'Sistemas eléctricos de operación', text: 'Control y protección eléctrica para equipos industriales.' },
+  { image: '/services/trabajo-10.jpg', title: 'Sistemas auxiliares de combustible', text: 'Instalación de bombas, filtros, medidores y líneas de transferencia.' },
 ]
 
 const controlSystems = [
@@ -127,6 +140,8 @@ function App() {
         {services.map(({icon: Icon, title, text}) => <article key={title}><div className="service-icon"><Icon/></div><div><h3>{title}</h3><p>{text}</p></div></article>)}
       </section>
 
+      <WorkCarousel projects={serviceProjects}/>
+
       <section className="catalog" id="productos">
         <div className="section-head"><div><span className="eyebrow">CATÁLOGO TÉCNICO</span><h2>Productos para estaciones de servicio</h2><p>Seleccione uno o varios productos y solicite una cotización sin compromiso.</p></div><button className="button outline" onClick={() => setRequestOpen(true)}>Solicitar otro repuesto</button></div>
         <div className="filter-row">
@@ -165,6 +180,26 @@ function App() {
 function QuoteDrawer({items, setItems, onClose, onRequest}) {
   const change = (id, delta) => setItems(items.map((i) => i.id === id ? {...i, qty: Math.max(1, i.qty + delta)} : i))
   return <div className="overlay"><aside className="drawer"><div className="drawer-head"><div><small>SOLICITUD</small><h2>Mi cotización</h2></div><button className="close" onClick={onClose}><X/></button></div>{items.length ? <><div className="quote-list">{items.map((i) => <div className="quote-item" key={i.id}><img src={i.image} alt=""/><div><strong>{i.name}</strong><small>{i.category}</small><span className="qty"><button onClick={() => change(i.id,-1)}><Minus/></button>{i.qty}<button onClick={() => change(i.id,1)}><Plus/></button></span></div><button className="remove" onClick={() => setItems(items.filter((x) => x.id !== i.id))}><Trash2/></button></div>)}</div><button className="button primary full" onClick={onRequest}>Continuar solicitud <ChevronRight/></button></> : <div className="drawer-empty"><ShoppingBag/><h3>Aún no agregó productos</h3><p>Explore el catálogo o solicite un repuesto especial.</p><button className="button primary" onClick={onRequest}>Solicitar otro repuesto</button></div>}</aside></div>
+}
+
+function WorkCarousel({projects}) {
+  const [active, setActive] = useState(0)
+  const [paused, setPaused] = useState(false)
+  const touchStart = useRef(null)
+  useEffect(() => {
+    if (paused) return undefined
+    const timer = window.setInterval(() => setActive((current) => (current + 1) % projects.length), 4500)
+    return () => window.clearInterval(timer)
+  }, [paused, projects.length])
+  const previous = () => setActive((current) => (current - 1 + projects.length) % projects.length)
+  const next = () => setActive((current) => (current + 1) % projects.length)
+  const finishSwipe = (event) => {
+    if (touchStart.current === null) return
+    const distance = event.changedTouches[0].clientX - touchStart.current
+    if (Math.abs(distance) > 45) distance > 0 ? previous() : next()
+    touchStart.current = null
+  }
+  return <section className="work-gallery" aria-label="Galería de trabajos realizados por MCI"><div className="work-gallery-head"><div><span className="eyebrow">EXPERIENCIA EN CAMPO</span><h2>Servicios, mantenimiento y construcción</h2><p>Conozca algunos de nuestros trabajos en estaciones de servicio, instalaciones de combustible y sistemas industriales.</p></div><a className="button outline" href={`https://wa.me/${WHATSAPP}?text=${encodeURIComponent('Hola MCI, deseo información sobre sus servicios de mantenimiento y construcción.')}`} target="_blank" rel="noreferrer">Solicitar visita técnica</a></div><div className="carousel" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onTouchStart={(event) => {touchStart.current = event.touches[0].clientX; setPaused(true)}} onTouchEnd={(event) => {finishSwipe(event); setPaused(false)}}><div className="carousel-track" style={{transform:`translateX(-${active * 100}%)`}}>{projects.map((project, index) => <article className="work-slide" key={project.image} aria-hidden={active !== index}><img src={project.image} alt={project.title}/><div className="work-caption"><span>PROYECTO {String(index + 1).padStart(2, '0')}</span><h3>{project.title}</h3><p>{project.text}</p></div></article>)}</div><button className="carousel-arrow previous" onClick={previous} aria-label="Ver trabajo anterior"><ChevronRight/></button><button className="carousel-arrow next" onClick={next} aria-label="Ver trabajo siguiente"><ChevronRight/></button><div className="carousel-dots">{projects.map((project, index) => <button key={project.image} className={active === index ? 'active' : ''} onClick={() => setActive(index)} aria-label={`Ver proyecto ${index + 1}`}></button>)}</div></div></section>
 }
 
 function RequestModal({items, onClose}) {
