@@ -78,3 +78,41 @@ export function watchMarketData(callback) {
 }
 
 export const saveMarketData = (data) => setDoc(doc(db, 'marketData', 'current'), {...data, updatedAt:serverTimestamp(), updatedBy:auth.currentUser?.email || ''}, {merge:true})
+
+export const sendClientNotification = (data) => addDoc(collection(db, 'notifications'), {
+  title: data.title.trim(),
+  body: data.body.trim(),
+  link: data.link?.trim() || '',
+  audience: data.audience === 'all' ? 'all' : 'user',
+  targetUid: data.audience === 'all' ? '' : data.targetUid,
+  targetEmail: data.audience === 'all' ? '' : data.targetEmail,
+  createdAt: serverTimestamp(),
+  createdBy: auth.currentUser?.email || '',
+})
+
+const notificationTime = (item) => item.createdAt?.toMillis?.() || 0
+
+export function watchAdminNotifications(callback) {
+  return onSnapshot(query(collection(db, 'notifications'), orderBy('createdAt', 'desc'), limit(100)), (snapshot) => {
+    callback(snapshot.docs.map((item) => ({id:item.id,...item.data()})))
+  })
+}
+
+export function watchClientNotifications(uid, callback) {
+  let general = []
+  let personal = []
+  const emit = () => callback([...general,...personal].sort((a,b) => notificationTime(b)-notificationTime(a)).slice(0,50))
+  const stopGeneral = onSnapshot(query(collection(db, 'notifications'), where('audience','==','all'), limit(50)), (snapshot) => {
+    general = snapshot.docs.map((item) => ({id:item.id,...item.data()})); emit()
+  })
+  const stopPersonal = onSnapshot(query(collection(db, 'notifications'), where('targetUid','==',uid), limit(50)), (snapshot) => {
+    personal = snapshot.docs.map((item) => ({id:item.id,...item.data()})); emit()
+  })
+  return () => { stopGeneral(); stopPersonal() }
+}
+
+export function watchNotificationReads(uid, callback) {
+  return onSnapshot(collection(db, 'users', uid, 'notificationReads'), (snapshot) => callback(new Set(snapshot.docs.map((item) => item.id))))
+}
+
+export const markNotificationRead = (uid, notificationId) => setDoc(doc(db, 'users', uid, 'notificationReads', notificationId), {readAt:serverTimestamp()})

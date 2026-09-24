@@ -21,6 +21,11 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if admin() || (signedIn() && request.auth.uid == userId);
       allow create, update, delete: if admin();
+
+      match /notificationReads/{notificationId} {
+        allow read, create, update: if signedIn() && request.auth.uid == userId;
+        allow delete: if admin();
+      }
     }
 
     match /quotes/{quoteId} {
@@ -31,6 +36,13 @@ service cloud.firestore {
     match /marketData/current {
       allow read: if signedIn();
       allow write: if admin();
+    }
+
+    match /notifications/{notificationId} {
+      allow create, update, delete: if admin();
+      allow read: if admin() || (signedIn() && (
+        resource.data.audience == 'all' || resource.data.targetUid == request.auth.uid
+      ));
     }
   }
 }

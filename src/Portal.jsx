@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react'
-import { ArrowLeft, BarChart3, Download, ExternalLink, FileText, Fuel, LoaderCircle, LogIn, LogOut, MapPin, Plus, RefreshCw, Save, ShieldCheck, Trash2, UserPlus, Users } from 'lucide-react'
-import { ADMIN_EMAIL, createClientUser, getUserProfile, isAdmin, login, logout, saveMarketData, saveQuote, watchMarketData, watchQuotes, watchRequests, watchUsers } from './firebase'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { ArrowLeft, BarChart3, Bell, BellRing, CheckCheck, Download, ExternalLink, FileText, Fuel, LoaderCircle, LogIn, LogOut, MapPin, Plus, RefreshCw, Save, Send, ShieldCheck, Trash2, UserPlus, Users } from 'lucide-react'
+import { ADMIN_EMAIL, createClientUser, getUserProfile, isAdmin, login, logout, markNotificationRead, saveMarketData, saveQuote, sendClientNotification, watchAdminNotifications, watchClientNotifications, watchMarketData, watchNotificationReads, watchQuotes, watchRequests, watchUsers } from './firebase'
 import { downloadQuotePdf } from './quotePdf'
 import { CRIPTO_PULSO_PUBLIC_URL, getFuelSupply, getMciServices } from './criptoPulso'
 
@@ -39,12 +39,13 @@ function AdminPortal({user, onBack}) {
     const stops = [watchRequests(setRequests), watchQuotes(setQuotes, true), watchUsers(setUsers)]
     return () => stops.forEach((stop) => stop?.())
   }, [])
-  const tabs = [{id:'resumen',label:'Resumen',icon:BarChart3},{id:'solicitudes',label:'Solicitudes',icon:FileText},{id:'cotizador',label:'Cotizador PDF',icon:Download},{id:'usuarios',label:'Usuarios',icon:Users},{id:'datos',label:'Datos y servicios',icon:Fuel}]
+  const tabs = [{id:'resumen',label:'Resumen',icon:BarChart3},{id:'solicitudes',label:'Solicitudes',icon:FileText},{id:'cotizador',label:'Cotizador PDF',icon:Download},{id:'usuarios',label:'Usuarios',icon:Users},{id:'notificaciones',label:'Notificaciones',icon:BellRing},{id:'datos',label:'Datos y servicios',icon:Fuel}]
   return <div className="portal-shell"><PortalHeader title="Administración MCI" user={user} onBack={onBack}/><div className="portal-layout"><aside className="portal-nav">{tabs.map(({id,label,icon:Icon}) => <button key={id} className={tab === id ? 'active' : ''} onClick={() => setTab(id)}><Icon/>{label}</button>)}</aside><main className="portal-content">
     {tab === 'resumen' && <Overview requests={requests} quotes={quotes} users={users}/>} 
     {tab === 'solicitudes' && <Requests requests={requests}/>} 
     {tab === 'cotizador' && <QuoteBuilder/>}
     {tab === 'usuarios' && <UserManager users={users}/>} 
+    {tab === 'notificaciones' && <NotificationManager users={users}/>} 
     {tab === 'datos' && <MarketEditor/>}
   </main></div></div>
 }
@@ -89,6 +90,27 @@ function MarketEditor() {
   return <><div className="portal-title"><span className="eyebrow">SERVICIOS COMPLEMENTARIOS</span><h1>Datos para clientes</h1><p>Versión inicial administrada por MCI. Los conectores automáticos se habilitarán posteriormente.</p></div><form className="portal-panel market-form" onSubmit={submit}><div className="form-grid">{fields.map(([key,label]) => <label key={key}>{label}<input value={data[key] || ''} onChange={(e) => setData({...data,[key]:e.target.value})} placeholder="Valor y moneda"/></label>)}</div><label>Resumen de saldos de combustible<textarea rows="4" value={data.fuelBalancesNote || ''} onChange={(e) => setData({...data,fuelBalancesNote:e.target.value})} placeholder="Información proveniente de Cripto Pulso..."/></label><button className="button primary"><Save size={17}/> Publicar información</button>{message && <div className="form-message">{message}</div>}</form></>
 }
 
+function NotificationManager({users}) {
+  const [form,setForm] = useState({audience:'all',targetUid:'',title:'',body:'',link:''})
+  const [history,setHistory] = useState([])
+  const [message,setMessage] = useState('')
+  const [sending,setSending] = useState(false)
+  useEffect(() => watchAdminNotifications(setHistory),[])
+  const selected = users.find((item) => item.id === form.targetUid)
+  const submit = async (event) => {
+    event.preventDefault()
+    if (form.audience === 'user' && !selected) return setMessage('Seleccione un cliente.')
+    setSending(true); setMessage('')
+    try {
+      await sendClientNotification({...form,targetEmail:selected?.email || ''})
+      setMessage(form.audience === 'all' ? 'Notificación enviada a todos los clientes.' : `Notificación enviada a ${selected.name}.`)
+      setForm((current) => ({...current,title:'',body:'',link:''}))
+    } catch { setMessage('No fue posible enviar la notificación. Verifique las reglas de Firestore.') }
+    finally { setSending(false) }
+  }
+  return <><div className="portal-title"><span className="eyebrow">COMUNICACIÓN CON CLIENTES</span><h1>Enviar notificaciones</h1><p>Publique novedades, productos, promociones o avisos para todos los clientes o para una cuenta específica.</p></div><div className="notification-admin-layout"><form className="portal-panel notification-form" onSubmit={submit}><h2>Nuevo mensaje</h2><div className="audience-options"><label className={form.audience === 'all' ? 'selected' : ''}><input type="radio" name="audience" checked={form.audience === 'all'} onChange={() => setForm({...form,audience:'all'})}/><Users/> Todos los clientes</label><label className={form.audience === 'user' ? 'selected' : ''}><input type="radio" name="audience" checked={form.audience === 'user'} onChange={() => setForm({...form,audience:'user'})}/><UserPlus/> Cliente específico</label></div>{form.audience === 'user' && <label>Destinatario<select required value={form.targetUid} onChange={(e) => setForm({...form,targetUid:e.target.value})}><option value="">Seleccione un cliente</option>{users.filter((item) => item.active).map((item) => <option key={item.id} value={item.id}>{item.name} · {item.email}</option>)}</select></label>}<label>Título<input required maxLength="80" value={form.title} onChange={(e) => setForm({...form,title:e.target.value})} placeholder="Ej.: Nueva pistola automática disponible"/></label><label>Mensaje<textarea required maxLength="500" rows="5" value={form.body} onChange={(e) => setForm({...form,body:e.target.value})} placeholder="Describa el producto, promoción o aviso..."/></label><label>Enlace opcional<input type="url" value={form.link} onChange={(e) => setForm({...form,link:e.target.value})} placeholder="https://..."/></label><button className="button primary full" disabled={sending}><Send size={17}/>{sending ? 'Enviando…' : 'Enviar notificación'}</button>{message && <div className="form-message">{message}</div>}</form><section className="portal-panel notification-history"><h2>Mensajes enviados</h2>{history.map((item) => <article key={item.id}><Bell size={17}/><div><strong>{item.title}</strong><p>{item.body}</p><small>{item.audience === 'all' ? 'Todos los clientes' : item.targetEmail}{item.createdAt?.toDate ? ` · ${item.createdAt.toDate().toLocaleString('es-BO')}` : ''}</small></div></article>)}{!history.length && <Empty text="Todavía no se enviaron notificaciones."/>}</section></div></>
+}
+
 function ClientPortal({user,onBack}) {
   const [profile,setProfile] = useState(null)
   const [market,setMarket] = useState(null)
@@ -101,20 +123,54 @@ function ClientPortal({user,onBack}) {
   const [fuelLoading,setFuelLoading] = useState(false)
   const [department,setDepartment] = useState('1')
   const [product,setProduct] = useState('gasoline')
+  const [notifications,setNotifications] = useState([])
+  const [notificationReads,setNotificationReads] = useState(new Set())
+  const [notificationOpen,setNotificationOpen] = useState(false)
+  const [permission,setPermission] = useState(() => typeof Notification === 'undefined' ? 'unsupported' : Notification.permission)
+  const notificationsReady = useRef(false)
   useEffect(() => { getUserProfile(user.uid).then(setProfile); const stopData = watchMarketData(setMarket); const stopQuotes = watchQuotes(setQuotes,false,user.email); return () => {stopData?.();stopQuotes?.()} },[user])
   const allowed = profile?.services || {}
   const loadLive = async () => { setLiveLoading(true); setLiveError(''); try {setLive(await getMciServices())} catch(error) {setLiveError(error.message)} finally {setLiveLoading(false)} }
   const loadFuel = async () => { setFuelLoading(true); setFuelError(''); try {setFuel(await getFuelSupply({department,product}))} catch(error) {setFuelError(error.message)} finally {setFuelLoading(false)} }
   useEffect(() => { loadLive() },[])
   useEffect(() => { if (allowed.balances) loadFuel() },[allowed.balances,department,product])
+  useEffect(() => {
+    const stopNotifications = watchClientNotifications(user.uid, (items) => {
+      setNotifications(items)
+      if (notificationsReady.current && typeof Notification !== 'undefined' && Notification.permission === 'granted' && items[0]) {
+        const latestKey = `mci_notified_${items[0].id}`
+        if (!localStorage.getItem(latestKey)) {
+          const alert = new Notification(items[0].title, {body:items[0].body,icon:'/icons/icon-192.png',tag:items[0].id})
+          if (items[0].link) alert.onclick = () => window.open(items[0].link,'_blank','noopener')
+          localStorage.setItem(latestKey,'1')
+        }
+      }
+      notificationsReady.current = true
+    })
+    const stopReads = watchNotificationReads(user.uid,setNotificationReads)
+    return () => {stopNotifications();stopReads()}
+  },[user.uid])
+  const enableNotifications = async () => {
+    if (typeof Notification === 'undefined') return setPermission('unsupported')
+    const result = await Notification.requestPermission(); setPermission(result)
+  }
+  const readNotification = async (item) => {
+    await markNotificationRead(user.uid,item.id)
+    if (item.link) window.open(item.link,'_blank','noopener')
+  }
+  const unread = notifications.filter((item) => !notificationReads.has(item.id)).length
   const updatedAt = live?.generatedAt ? new Date(live.generatedAt).toLocaleString('es-BO') : ''
-  return <div className="portal-shell"><PortalHeader title="Servicios MCI" user={user} onBack={onBack}/><main className="client-content"><div className="portal-title"><span className="eyebrow">ÁREA DE CLIENTES</span><h1>Bienvenido, {profile?.name || user.email}</h1><p>Información y servicios habilitados por MCI para su cuenta.</p></div><div className="client-services">
+  return <div className="portal-shell"><PortalHeader title="Servicios MCI" user={user} onBack={onBack}/><main className="client-content"><NotificationCenter items={notifications} reads={notificationReads} unread={unread} open={notificationOpen} onToggle={() => setNotificationOpen(!notificationOpen)} onRead={readNotification} permission={permission} onEnable={enableNotifications}/><div className="portal-title"><span className="eyebrow">ÁREA DE CLIENTES</span><h1>Bienvenido, {profile?.name || user.email}</h1><p>Información y servicios habilitados por MCI para su cuenta.</p></div><div className="client-services">
     {allowed.dollar && <ServiceCard title="Dólar de referencia" value={liveLoading ? 'Actualizando…' : `Compra Bs ${live?.dollar?.official?.buy ?? market?.bcbBuy ?? '—'} | Venta Bs ${live?.dollar?.official?.sell ?? market?.bcbSell ?? '—'}`} note={live?.notices?.official || 'Referencia informativa; verifique su vigencia.'}/>} 
     {allowed.p2p && <ServiceCard title="Mercado P2P USDT/BOB" value={liveLoading ? 'Actualizando…' : `Compra Bs ${live?.dollar?.p2p?.buy ?? market?.p2pBuy ?? '—'} | Venta Bs ${live?.dollar?.p2p?.sell ?? market?.p2pSell ?? '—'}`} note={live?.notices?.p2p || 'Referencia P2P; no constituye oferta de cambio.'}/>} 
     {allowed.fuelPrices && <RegionalFuel data={live?.regionalFuel} fallback={market}/>} 
   </div>{liveError && <div className="data-warning">No se pudo actualizar Cripto Pulso. Se muestran los datos de respaldo disponibles.</div>}{updatedAt && <div className="data-source"><span>Datos: Cripto Pulso · actualizado {updatedAt}</span><button onClick={loadLive} disabled={liveLoading}><RefreshCw size={15}/> Actualizar</button></div>}
   {allowed.balances && <FuelBalances data={fuel} loading={fuelLoading} error={fuelError} department={department} product={product} onDepartment={setDepartment} onProduct={setProduct} onRefresh={loadFuel}/>} 
   {allowed.quotes && <div className="portal-panel client-quotes"><h2>Mis cotizaciones</h2>{quotes.map((quote) => <div className="activity-row" key={quote.id}><div><strong>{quote.number}</strong><small>{quote.items?.map((item) => item.description).join(', ')}</small></div><button className="button outline small" onClick={() => downloadQuotePdf(quote)}><Download size={15}/> PDF</button></div>)}{!quotes.length && <Empty text="Sus cotizaciones aparecerán aquí."/>}</div>}</main></div>
+}
+
+function NotificationCenter({items,reads,unread,open,onToggle,onRead,permission,onEnable}) {
+  return <section className="client-notifications"><div className="notification-bar"><div><BellRing/><span><strong>Novedades MCI</strong><small>{unread ? `${unread} mensaje${unread === 1 ? '' : 's'} sin leer` : 'No tiene mensajes nuevos'}</small></span></div><button className="notification-bell" onClick={onToggle} aria-label="Abrir notificaciones"><Bell/>{unread > 0 && <b>{unread > 9 ? '9+' : unread}</b>}</button></div>{permission === 'default' && <div className="permission-prompt"><BellRing/><div><strong>Reciba avisos de nuevos productos</strong><p>Active las notificaciones para conocer promociones y novedades de MCI.</p></div><button className="button primary small" onClick={onEnable}>Activar avisos</button></div>}{permission === 'denied' && <div className="permission-note">Las notificaciones están bloqueadas en este dispositivo. Puede habilitarlas desde la configuración del navegador o de la aplicación.</div>}{open && <div className="notification-inbox">{items.map((item) => <button key={item.id} className={reads.has(item.id) ? 'read' : 'unread'} onClick={() => onRead(item)}><span>{reads.has(item.id) ? <CheckCheck/> : <Bell/>}</span><div><strong>{item.title}</strong><p>{item.body}</p><small>{item.createdAt?.toDate ? item.createdAt.toDate().toLocaleString('es-BO') : 'Ahora'}{item.link ? ' · Abrir información' : ''}</small></div></button>)}{!items.length && <Empty text="Aquí aparecerán los mensajes y nuevos productos de MCI."/>}</div>}</section>
 }
 
 const ServiceCard = ({title,value,note}) => <article className="client-service"><ShieldCheck/><small>SERVICIO HABILITADO</small><h2>{title}</h2><strong>{value}</strong><p>{note}</p></article>
