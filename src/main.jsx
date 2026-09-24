@@ -152,6 +152,11 @@ function App() {
       <button className="menu-button" onClick={() => setMenu(!menu)} aria-label="Abrir menú">{menu ? <X/> : <Menu/>}</button>
     </header>
 
+    <button className="mobile-account-button" onClick={openPortal} aria-label={user ? 'Abrir mi cuenta' : 'Iniciar sesión'}>
+      <UserRound size={19}/>
+      <span>{user ? 'Mi cuenta' : 'Iniciar sesión'}</span>
+    </button>
+
     <main>
       <section className="hero" id="inicio">
         <div className="hero-copy">
