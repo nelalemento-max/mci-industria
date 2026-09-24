@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { ArrowLeft, BarChart3, Download, FileText, Fuel, LogIn, LogOut, Plus, Save, ShieldCheck, Trash2, UserPlus, Users, X } from 'lucide-react'
+import { ArrowLeft, BarChart3, Download, ExternalLink, FileText, Fuel, LoaderCircle, LogIn, LogOut, MapPin, Plus, RefreshCw, Save, ShieldCheck, Trash2, UserPlus, Users } from 'lucide-react'
 import { ADMIN_EMAIL, createClientUser, getUserProfile, isAdmin, login, logout, saveMarketData, saveQuote, watchMarketData, watchQuotes, watchRequests, watchUsers } from './firebase'
 import { downloadQuotePdf } from './quotePdf'
+import { CRIPTO_PULSO_PUBLIC_URL, getFuelSupply, getMciServices } from './criptoPulso'
 
 const emptyItem = () => ({description:'', qty:1, unitPrice:0, specs:''})
 const initialMarket = {bcbBuy:'', bcbSell:'', p2pBuy:'', p2pSell:'', argentinaFuel:'', chileFuel:'', peruFuel:'', brazilFuel:'', paraguayFuel:'', fuelBalancesNote:''}
@@ -92,14 +93,47 @@ function ClientPortal({user,onBack}) {
   const [profile,setProfile] = useState(null)
   const [market,setMarket] = useState(null)
   const [quotes,setQuotes] = useState([])
+  const [live,setLive] = useState(null)
+  const [liveError,setLiveError] = useState('')
+  const [liveLoading,setLiveLoading] = useState(true)
+  const [fuel,setFuel] = useState(null)
+  const [fuelError,setFuelError] = useState('')
+  const [fuelLoading,setFuelLoading] = useState(false)
+  const [department,setDepartment] = useState('1')
+  const [product,setProduct] = useState('gasoline')
   useEffect(() => { getUserProfile(user.uid).then(setProfile); const stopData = watchMarketData(setMarket); const stopQuotes = watchQuotes(setQuotes,false,user.email); return () => {stopData?.();stopQuotes?.()} },[user])
   const allowed = profile?.services || {}
+  const loadLive = async () => { setLiveLoading(true); setLiveError(''); try {setLive(await getMciServices())} catch(error) {setLiveError(error.message)} finally {setLiveLoading(false)} }
+  const loadFuel = async () => { setFuelLoading(true); setFuelError(''); try {setFuel(await getFuelSupply({department,product}))} catch(error) {setFuelError(error.message)} finally {setFuelLoading(false)} }
+  useEffect(() => { loadLive() },[])
+  useEffect(() => { if (allowed.balances) loadFuel() },[allowed.balances,department,product])
+  const updatedAt = live?.generatedAt ? new Date(live.generatedAt).toLocaleString('es-BO') : ''
   return <div className="portal-shell"><PortalHeader title="Servicios MCI" user={user} onBack={onBack}/><main className="client-content"><div className="portal-title"><span className="eyebrow">ÁREA DE CLIENTES</span><h1>Bienvenido, {profile?.name || user.email}</h1><p>Información y servicios habilitados por MCI para su cuenta.</p></div><div className="client-services">
-    {allowed.balances && <ServiceCard title="Saldos de combustible" value={market?.fuelBalancesNote || 'Pendiente de actualización'} note="Información integrada desde los sistemas de seguimiento."/>}
-    {allowed.dollar && <ServiceCard title="Dólar oficial BCB" value={`Compra ${market?.bcbBuy || '—'} | Venta ${market?.bcbSell || '—'}`} note="Referencia informativa publicada por MCI."/>}
-    {allowed.p2p && <ServiceCard title="Mercado P2P" value={`Compra ${market?.p2pBuy || '—'} | Venta ${market?.p2pSell || '—'}`} note="Referencia P2P; no constituye oferta de cambio."/>}
-    {allowed.fuelPrices && <ServiceCard title="Combustibles en países cercanos" value={`Argentina ${market?.argentinaFuel || '—'} · Chile ${market?.chileFuel || '—'} · Perú ${market?.peruFuel || '—'} · Brasil ${market?.brazilFuel || '—'} · Paraguay ${market?.paraguayFuel || '—'}`} note="Valores referenciales sujetos a actualización."/>}
-  </div>{allowed.quotes && <div className="portal-panel client-quotes"><h2>Mis cotizaciones</h2>{quotes.map((quote) => <div className="activity-row" key={quote.id}><div><strong>{quote.number}</strong><small>{quote.items?.map((item) => item.description).join(', ')}</small></div><button className="button outline small" onClick={() => downloadQuotePdf(quote)}><Download size={15}/> PDF</button></div>)}{!quotes.length && <Empty text="Sus cotizaciones aparecerán aquí."/>}</div>}</main></div>
+    {allowed.dollar && <ServiceCard title="Dólar de referencia" value={liveLoading ? 'Actualizando…' : `Compra Bs ${live?.dollar?.official?.buy ?? market?.bcbBuy ?? '—'} | Venta Bs ${live?.dollar?.official?.sell ?? market?.bcbSell ?? '—'}`} note={live?.notices?.official || 'Referencia informativa; verifique su vigencia.'}/>} 
+    {allowed.p2p && <ServiceCard title="Mercado P2P USDT/BOB" value={liveLoading ? 'Actualizando…' : `Compra Bs ${live?.dollar?.p2p?.buy ?? market?.p2pBuy ?? '—'} | Venta Bs ${live?.dollar?.p2p?.sell ?? market?.p2pSell ?? '—'}`} note={live?.notices?.p2p || 'Referencia P2P; no constituye oferta de cambio.'}/>} 
+    {allowed.fuelPrices && <RegionalFuel data={live?.regionalFuel} fallback={market}/>} 
+  </div>{liveError && <div className="data-warning">No se pudo actualizar Cripto Pulso. Se muestran los datos de respaldo disponibles.</div>}{updatedAt && <div className="data-source"><span>Datos: Cripto Pulso · actualizado {updatedAt}</span><button onClick={loadLive} disabled={liveLoading}><RefreshCw size={15}/> Actualizar</button></div>}
+  {allowed.balances && <FuelBalances data={fuel} loading={fuelLoading} error={fuelError} department={department} product={product} onDepartment={setDepartment} onProduct={setProduct} onRefresh={loadFuel}/>} 
+  {allowed.quotes && <div className="portal-panel client-quotes"><h2>Mis cotizaciones</h2>{quotes.map((quote) => <div className="activity-row" key={quote.id}><div><strong>{quote.number}</strong><small>{quote.items?.map((item) => item.description).join(', ')}</small></div><button className="button outline small" onClick={() => downloadQuotePdf(quote)}><Download size={15}/> PDF</button></div>)}{!quotes.length && <Empty text="Sus cotizaciones aparecerán aquí."/>}</div>}</main></div>
 }
 
 const ServiceCard = ({title,value,note}) => <article className="client-service"><ShieldCheck/><small>SERVICIO HABILITADO</small><h2>{title}</h2><strong>{value}</strong><p>{note}</p></article>
+
+function RegionalFuel({data,fallback}) {
+  if (!data?.length) return <ServiceCard title="Combustibles en países cercanos" value={`Argentina ${fallback?.argentinaFuel || '—'} · Chile ${fallback?.chileFuel || '—'} · Perú ${fallback?.peruFuel || '—'} · Brasil ${fallback?.brazilFuel || '—'} · Paraguay ${fallback?.paraguayFuel || '—'}`} note="Datos de respaldo; valores referenciales."/>
+  return <article className="client-service regional-service"><ShieldCheck/><small>SERVICIO HABILITADO</small><h2>Combustibles en países cercanos</h2><div className="regional-mini">{data.map((item) => <div key={item.country}><b>{item.country}</b><span>Gasolina ${item.gasoline.toFixed(2)}/L</span><span>Diésel ${item.diesel.toFixed(2)}/L</span></div>)}</div><p>Referencias Cripto Pulso en USD por litro; pueden variar por ciudad e impuestos.</p></article>
+}
+
+const departments = ['','Chuquisaca','La Paz','Cochabamba','Oruro','Potosí','Tarija','Santa Cruz','Beni','Pando']
+const productLabels = {gasoline:'Gasolina especial',diesel:'Diésel oil',premium:'Gasolina premium',uls:'Diésel ULS'}
+const liters = (value) => `${Number(value || 0).toLocaleString('es-BO')} L`
+
+function FuelBalances({data,loading,error,department,product,onDepartment,onProduct,onRefresh}) {
+  const stations = data?.stations || []
+  const total = stations.reduce((sum,item) => sum + Number(item.liters || 0),0)
+  const selling = stations.filter((item) => item.hasSales).length
+  const dispatches = stations.filter((item) => item.dispatchInProgress).length
+  const empty = stations.filter((item) => Number(item.liters) === 0).length
+  const shown = [...stations].sort((a,b) => Number(b.liters)-Number(a.liters)).slice(0,20)
+  return <section className="portal-panel fuel-client"><div className="fuel-client-head"><div><span className="eyebrow">SALDOS DE COMBUSTIBLE</span><h2>{departments[Number(department)]} · {productLabels[product]}</h2><p>Información pública organizada por Cripto Pulso a partir de ANH Abastecimiento.</p></div><button className="button outline small" onClick={onRefresh} disabled={loading}>{loading ? <LoaderCircle className="spin"/> : <RefreshCw/>} Actualizar</button></div><div className="fuel-client-filters"><label>Departamento<select value={department} onChange={(e) => onDepartment(e.target.value)}>{departments.slice(1).map((name,index) => <option key={name} value={index+1}>{name}</option>)}</select></label><label>Producto<select value={product} onChange={(e) => onProduct(e.target.value)}>{Object.entries(productLabels).map(([key,label]) => <option key={key} value={key}>{label}</option>)}</select></label><a href={CRIPTO_PULSO_PUBLIC_URL} target="_blank" rel="noreferrer">Ver análisis completo <ExternalLink size={14}/></a></div>{error && <div className="data-warning">{error}</div>}{loading && !data ? <div className="fuel-loading"><LoaderCircle className="spin"/> Consultando estaciones…</div> : <><div className="fuel-kpis"><Metric label="Litros reportados" value={liters(total)}/><Metric label="Estaciones" value={stations.length}/><Metric label="Vendiendo" value={selling}/><Metric label="Vacías" value={empty}/><Metric label="Despachos" value={dispatches}/></div><div className="fuel-station-list">{shown.map((station) => <article key={station.id}><div className="fuel-level"><i style={{width:`${Math.min(100,Number(station.fillPercent || 0))}%`}}/></div><div><h3>{station.name}</h3><p>{station.address || station.zone || 'Dirección no informada'}</p><span>{station.hasSales ? '● Venta activa' : '○ Sin venta activa'}{station.dispatchInProgress ? ' · Despacho en curso' : ''}</span></div><strong>{liters(station.liters)}</strong><a href={station.latitude != null && station.longitude != null ? `https://www.google.com/maps/search/?api=1&query=${station.latitude},${station.longitude}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${station.name}, ${departments[Number(department)]}, Bolivia`)}`} target="_blank" rel="noreferrer" aria-label={`Ubicación de ${station.name}`}><MapPin/></a></article>)}</div>{stations.length > shown.length && <p className="fuel-more">Se muestran las 20 estaciones con mayor saldo. Cripto Pulso contiene {stations.length} registros para este filtro.</p>}<small className="fuel-method">Litros, venta, despacho, ubicación y hora provienen de ANH. Porcentaje, capacidad y autonomía son cálculos estimados de Cripto Pulso.</small></>}</section>
+}

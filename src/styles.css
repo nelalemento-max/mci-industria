@@ -25,6 +25,28 @@
   .footer-logo{width:80px;height:80px}
 }
 
+/* Servicios en vivo para clientes MCI */
+.regional-service{grid-column:span 2}
+.regional-mini{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin:15px 0}
+.regional-mini>div{padding:12px;border-radius:8px;background:#f3f7f8;display:flex;flex-direction:column;gap:5px}
+.regional-mini b{font-size:12px;color:var(--navy)}.regional-mini span{font-size:10px;color:#637784}
+.data-warning{margin:12px 0;padding:12px 14px;border:1px solid #eacb8d;border-radius:8px;background:#fff8e7;color:#7d5b18;font-size:12px}
+.data-source{display:flex;align-items:center;justify-content:space-between;gap:15px;margin:-8px 0 22px;color:#6e7f8b;font-size:10px}
+.data-source button{border:0;background:transparent;color:var(--teal);font-weight:800;display:flex;align-items:center;gap:6px}
+.fuel-client{margin-top:20px}.fuel-client-head{display:flex;justify-content:space-between;gap:20px;align-items:start}.fuel-client-head h2{font-size:25px;margin:7px 0}.fuel-client-head p{font-size:12px;color:#6b7d89;margin:0}
+.fuel-client-filters{display:flex;align-items:end;gap:12px;margin:24px 0;padding:15px;border-radius:9px;background:#f3f7f8}
+.fuel-client-filters label{display:grid;gap:6px;font-size:10px;font-weight:800;color:#536775}.fuel-client-filters select{min-width:190px;padding:10px;border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--navy)}
+.fuel-client-filters>a{margin-left:auto;min-height:40px;display:flex;align-items:center;gap:6px;color:var(--teal);font-size:11px;font-weight:800}
+.fuel-kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px}.fuel-kpis .metric{padding:15px}.fuel-kpis .metric strong{font-size:21px}
+.fuel-loading{min-height:170px;display:flex;align-items:center;justify-content:center;gap:8px;color:#6e808c;font-size:12px}.spin{animation:mci-spin .9s linear infinite}@keyframes mci-spin{to{transform:rotate(360deg)}}
+.fuel-station-list{display:grid;gap:8px}.fuel-station-list article{display:grid;grid-template-columns:110px minmax(0,1fr) 105px 40px;gap:14px;align-items:center;padding:13px;border:1px solid var(--line);border-radius:9px}
+.fuel-level{height:9px;overflow:hidden;border-radius:99px;background:#e5ecef}.fuel-level i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#f28b2d,#00a197)}
+.fuel-station-list h3{font-size:13px;color:var(--navy);margin:0 0 4px}.fuel-station-list p{font-size:10px;color:#73838f;margin:0 0 5px}.fuel-station-list span{font-size:9px;color:#08767d;font-weight:800}.fuel-station-list>article>strong{text-align:right;color:var(--navy);font-size:13px}.fuel-station-list a{width:38px;height:38px;border-radius:8px;background:#e8f4f4;color:var(--teal);display:grid;place-items:center}.fuel-station-list a svg{width:17px}
+.fuel-more,.fuel-method{display:block;margin:16px 0 0;color:#73838f;font-size:10px;line-height:1.6}.fuel-method{padding-top:14px;border-top:1px solid var(--line)}
+
+@media(max-width:900px){.regional-mini{grid-template-columns:repeat(2,1fr)}.fuel-kpis{grid-template-columns:repeat(2,1fr)}.fuel-client-filters{align-items:stretch;flex-direction:column}.fuel-client-filters>a{margin-left:0}.fuel-client-filters select{width:100%;min-width:0}}
+@media(max-width:620px){.regional-service{grid-column:1}.regional-mini{grid-template-columns:1fr}.fuel-client-head{flex-direction:column}.fuel-client-head .button{width:100%}.fuel-station-list article{grid-template-columns:1fr 80px 38px}.fuel-level{grid-column:1/4}.fuel-station-list>article>strong{font-size:11px}.data-source{align-items:flex-start;flex-direction:column}}
+
 /* Acceso, instalación y servicios digitales */
 .access-pill{margin-left:8px;min-height:42px;padding:0 14px;border:1px solid var(--line);border-radius:999px;display:flex;align-items:center;gap:7px;background:#fff;color:var(--navy);font-size:12px;font-weight:800}
 .digital-services{margin:0 clamp(22px,6vw,90px) 80px;padding:48px;display:grid;grid-template-columns:1.2fr .8fr;gap:50px;align-items:center;color:#fff;background:linear-gradient(120deg,#071e31,#0c5264);border-radius:18px}
