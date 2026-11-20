@@ -252,9 +252,10 @@ function RequestModal({items, onClose}) {
   const [detail, setDetail] = useState(items.map((i) => `${i.qty} x ${i.name}`).join('\n'))
   const submit = async (e) => {
     e.preventDefault()
-    try { await saveRequest({name, phone, detail, items:items.map((item) => ({id:item.id,name:item.name,qty:item.qty}))}) } catch {}
     const text = `SOLICITUD DE COTIZACIÓN MCI\nNombre: ${name}\nWhatsApp: ${phone}\n\nDetalle:\n${detail}`
-    window.open(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer')
+    const whatsappUrl = `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(text)}`
+    saveRequest({name, phone, detail, items:items.map((item) => ({id:item.id,name:item.name,qty:item.qty}))}).catch(() => {})
+    window.location.assign(whatsappUrl)
   }
   return <div className="overlay modal-overlay"><section className="modal"><button className="close" onClick={onClose}><X/></button><span className="eyebrow">MCI SE LO CONSIGUE</span><h2>Cuéntenos qué repuesto necesita</h2><p>Solo necesitamos sus datos de contacto y el detalle del equipo. Nuestro personal continuará la atención por WhatsApp.</p><form onSubmit={submit}><label>Nombre completo<input required value={name} onChange={(e) => setName(e.target.value)} placeholder="Ej. Carlos Mendoza"/></label><label>Número de WhatsApp<input required inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Ej. 70000000"/></label><label>Detalle del repuesto<textarea required rows="5" value={detail} onChange={(e) => setDetail(e.target.value)} placeholder="Nombre, marca, modelo, medida, cantidad o cualquier dato que tenga..."/></label><button className="button primary full" type="submit"><Send size={18}/> Enviar solicitud por WhatsApp</button></form><small className="privacy">Sus datos serán utilizados únicamente para atender esta solicitud.</small></section></div>
 }
