@@ -7,6 +7,34 @@ import { saveRequest, trackVisit, watchSession } from './firebase'
 const Portal = lazy(() => import('./Portal'))
 
 const WHATSAPP = '59167778452'
+const WERTCO_SITE = 'https://www.wertco.com.br/home/index/esp'
+
+const wertcoModels = [
+  {
+    title: 'Dispensers modulares Wertco',
+    model: 'Configuraciones simples y múltiples',
+    text: 'Soluciones para diferentes volúmenes de operación y configuraciones de mangueras.',
+    image: 'https://www.wertco.com.br/bootstrap/img/revolution-slider/kenburns/quatroBombas1.jpg',
+  },
+  {
+    title: 'Línea de manguera alta',
+    model: 'Modelos CHH y CHHS',
+    text: 'Diseño moderno, variantes slim y opciones para múltiples productos.',
+    image: 'https://www.wertco.com.br/bootstrap/img/revolution-slider/kenburns/duasBombas.jpg',
+  },
+  {
+    title: 'Tecnología para su estación',
+    model: 'Electrónica Companytec',
+    text: 'Conectividad, integración, teclado touch y totalizador electrónico.',
+    image: 'https://www.wertco.com.br/bootstrap/img/revolution-slider/kenburns/tresBombas1.jpg',
+  },
+  {
+    title: 'Soluciones de abastecimiento',
+    model: 'Wertco + MCI Bolivia',
+    text: 'Venta, orientación técnica, instalación, repuestos y mantenimiento especializado.',
+    image: 'https://www.wertco.com.br/bootstrap/img/revolution-slider/kenburns/fundopostowertco.jpg',
+  },
+]
 
 const products = [
   { id: 1, name: 'Contenedor de derrame para dispensador', category: 'Control de derrames', image: '/products/image1.jpeg', tags: 'contenedor dispenser derrame seguridad' },
@@ -158,6 +186,8 @@ function App() {
     </button>
 
     <main>
+      <WertcoShowcase models={wertcoModels}/>
+
       <section className="hero" id="inicio">
         <div className="hero-copy">
           <span className="eyebrow"><ShieldCheck size={16}/> Atención especializada en Bolivia</span>
@@ -224,6 +254,37 @@ function App() {
 function QuoteDrawer({items, setItems, onClose, onRequest}) {
   const change = (id, delta) => setItems(items.map((i) => i.id === id ? {...i, qty: Math.max(1, i.qty + delta)} : i))
   return <div className="overlay"><aside className="drawer"><div className="drawer-head"><div><small>SOLICITUD</small><h2>Mi cotización</h2></div><button className="close" onClick={onClose}><X/></button></div>{items.length ? <><div className="quote-list">{items.map((i) => <div className="quote-item" key={i.id}><img src={i.image} alt=""/><div><strong>{i.name}</strong><small>{i.category}</small><span className="qty"><button onClick={() => change(i.id,-1)}><Minus/></button>{i.qty}<button onClick={() => change(i.id,1)}><Plus/></button></span></div><button className="remove" onClick={() => setItems(items.filter((x) => x.id !== i.id))}><Trash2/></button></div>)}</div><button className="button primary full" onClick={onRequest}>Continuar solicitud <ChevronRight/></button></> : <div className="drawer-empty"><ShoppingBag/><h3>Aún no agregó productos</h3><p>Explore el catálogo o solicite un repuesto especial.</p><button className="button primary" onClick={onRequest}>Solicitar otro repuesto</button></div>}</aside></div>
+}
+
+function WertcoShowcase({models}) {
+  const repeatedModels = [...models, ...models]
+  return <section className="wertco-showcase" aria-labelledby="wertco-title">
+    <div className="wertco-heading">
+      <div className="wertco-copy">
+        <span className="wertco-badge"><ShieldCheck size={16}/> REPRESENTANTE WERTCO EN BOLIVIA</span>
+        <h2 id="wertco-title">Dispensers Wertco ahora con respaldo MCI</h2>
+        <p>Equipos modernos, confiables y configurables para estaciones de servicio. MCI brinda asesoramiento comercial y técnico, instalación, repuestos y mantenimiento.</p>
+        <div className="wertco-highlights">
+          <span><ShieldCheck size={16}/> Electrónica Companytec</span>
+          <span><ShieldCheck size={16}/> Diseño modular</span>
+          <span><ShieldCheck size={16}/> Conectividad e integración</span>
+        </div>
+      </div>
+      <div className="wertco-actions">
+        <a className="button primary" href={`https://wa.me/${WHATSAPP}?text=${encodeURIComponent('Hola MCI, deseo información y una cotización de dispensers Wertco.')}`} target="_blank" rel="noreferrer"><MessageCircle size={18}/> Cotizar dispensers</a>
+        <a className="button wertco-official" href={WERTCO_SITE} target="_blank" rel="noreferrer">Conocer Wertco <ExternalLink size={17}/></a>
+      </div>
+    </div>
+    <div className="wertco-marquee" aria-label="Modelos y soluciones Wertco">
+      <div className="wertco-track">
+        {repeatedModels.map((model, index) => <article className="wertco-card" key={`${model.title}-${index}`} aria-hidden={index >= models.length}>
+          <img src={model.image} alt={index < models.length ? model.title : ''} loading={index < 2 ? 'eager' : 'lazy'}/>
+          <div className="wertco-card-copy"><small>{model.model}</small><h3>{model.title}</h3><p>{model.text}</p></div>
+        </article>)}
+      </div>
+    </div>
+    <p className="wertco-source">Imágenes y características referenciales de Wertco. Consulte disponibilidad y configuración para Bolivia con MCI.</p>
+  </section>
 }
 
 function WorkCarousel({projects}) {
